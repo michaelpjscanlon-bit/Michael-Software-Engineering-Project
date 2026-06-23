@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}NBA Stats Hub{% endblock %}
+
+{% block content %}
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #111827, #1d428a);
+        color: white;
+        border-radius: 24px;
+        padding: 56px 36px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero-section h1 {
+        font-size: 48px;
+        font-weight: 900;
+        margin-bottom: 14px;
+    }
+
+    .hero-section p {
+        font-size: 19px;
+        max-width: 760px;
+        line-height: 1.6;
+    }
+
+    .feature-card {
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+    }
+
+    .feature-card .card-body {
+        padding: 28px;
+    }
+
+    .feature-icon {
+        font-size: 34px;
+        margin-bottom: 12px;
+    }
+
+    .feature-card h3 {
+        font-weight: 800;
+    }
+
+    .project-note {
+        background: white;
+        border-radius: 18px;
+        padding: 26px;
+        margin-top: 32px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    }
+</style>
+
+<section class="hero-section">
+    <h1>NBA Stats Hub</h1>
+
+    <p>
+        Generate interactive NBA graphs, compare teams and players, explore award winners,
+        and view detailed player profiles using database and CSV-driven statistics.
+    </p>
+
+    <div class="mt-4">
+        <a href="{{ url_for('player_graphs') }}" class="btn btn-warning btn-lg me-2">
+            Explore Player Graphs
+        </a>
+
+        <a href="{{ url_for('graphs') }}" class="btn btn-outline-light btn-lg">
+            Explore Team Graphs
+        </a>
+    </div>
+</section>
+
+<div class="row g-4">
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">📈</div>
+                <h3>Team Graphs</h3>
+                <p>
+                    Compare NBA teams across points, rebounds, assists, wins,
+                    defensive stats and matchup performance.
+                </p>
+                <a href="{{ url_for('graphs') }}" class="btn btn-dark">
+                    Open Team Graphs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">🏀</div>
+                <h3>Player Graphs</h3>
+                <p>
+                    Search, filter and compare NBA players using season averages,
+                    awards, draft class, height, position and career type.
+                </p>
+                <a href="{{ url_for('player_graphs') }}" class="btn btn-dark">
+                    Open Player Graphs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">🏆</div>
+                <h3>Awards</h3>
+                <p>
+                    View major NBA award winners including MVP, DPOY,
+                    Finals MVP and Sixth Man of the Year.
+                </p>
+                <a href="{{ url_for('mvp') }}" class="btn btn-dark">
+                    View Awards
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">👤</div>
+                <h3>Player Profiles</h3>
+                <p>
+                    Open individual player pages with images, career details,
+                    awards, latest-season stats and career summaries.
+                </p>
+                <a href="{{ url_for('player_search_page') }}" class="btn btn-dark">
+                    Find a Player
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="project-note">
+    <h2>Project Overview</h2>
+    <p>
+        This website uses Flask, SQLite, CSV datasets, Bootstrap and Chart.js to create
+        an interactive NBA statistics system. Users can filter large player datasets,
+        generate graphs, compare statistics and navigate between team, player and award data.
+    </p>
+</div>
+
+{% endblock %}

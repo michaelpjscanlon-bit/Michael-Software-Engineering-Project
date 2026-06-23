@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .award-page {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .award-hero {
+        background: linear-gradient(135deg, #111827, #1d428a);
+        color: white;
+        border-radius: 24px;
+        padding: 34px;
+        margin-bottom: 28px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .award-hero h1 {
+        font-size: 42px;
+        font-weight: 900;
+        margin-bottom: 10px;
+    }
+
+    .award-hero p {
+        max-width: 850px;
+        line-height: 1.6;
+        margin-bottom: 0;
+        font-size: 16px;
+    }
+
+    .award-image-card {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+        margin-bottom: 28px;
+    }
+
+    .award-image {
+        width: 100%;
+        max-height: 380px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .award-search-card,
+    .award-table-card {
+        background: white;
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .award-table {
+        margin-bottom: 0;
+    }
+
+    .award-table th {
+        background-color: #111827;
+        color: white;
+        font-weight: 800;
+        border-color: #111827;
+    }
+
+    .award-table td {
+        vertical-align: middle;
+    }
+
+    .award-year-badge {
+        display: inline-block;
+        min-width: 70px;
+        text-align: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background-color: #f59e0b;
+        color: #111827;
+        font-weight: 800;
+    }
+
+    .award-player-link {
+        font-weight: 800;
+        color: #1d428a;
+        text-decoration: none;
+    }
+
+    .award-player-link:hover {
+        text-decoration: underline;
+    }
+
+    .team-text {
+        color: #4b5563;
+        font-weight: 600;
+    }
+
+    .empty-awards {
+        text-align: center;
+        padding: 28px;
+        color: #6b7280;
+    }
+
+    @media (max-width: 768px) {
+        .award-hero h1 {
+            font-size: 32px;
+        }
+
+        .award-image {
+            max-height: 260px;
+        }
+    }
+</style>
+
+<div class="award-page">
+
+    <section class="award-hero">
+        <h1>{{ title }}</h1>
+        <p>{{ description }}</p>
+    </section>
+
+    <div class="award-image-card">
+        <img src="{{ image }}" alt="{{ title }} image" class="award-image">
+    </div>
+
+    <div class="award-search-card">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-9">
+                <label for="q" class="form-label fw-bold">Search by player or year</label>
+                <input
+                    type="text"
+                    name="q"
+                    id="q"
+                    class="form-control form-control-lg"
+                    value="{{ q or '' }}"
+                    placeholder="e.g. Michael Jordan, 2016, LeBron James">
+            </div>
+
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-dark btn-lg">
+                    Search
+                </button>
+            </div>
+
+            {% if q %}
+                <div class="col-12">
+                    <a href="{{ request.path }}" class="btn btn-outline-secondary btn-sm">
+                        Clear search
+                    </a>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="award-table-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h2 class="mb-0">Award Winners</h2>
+            <span class="text-muted">{{ rows|length }} result(s)</span>
+        </div>
+
+        {% if rows %}
+            <div class="table-responsive">
+                <table class="table table-hover award-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Player</th>
+                            <th>Team</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td>
+                                    <span class="award-year-badge">{{ row.year }}</span>
+                                </td>
+
+                                <td>
+                                    {% if row.profile_player_id %}
+                                        <a
+                                            href="{{ url_for('player_profile', player_id=row.profile_player_id) }}"
+                                            class="award-player-link">
+                                            {{ row.name }}
+                                        </a>
+                                    {% else %}
+                                        <strong>{{ row.name }}</strong>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="team-text">{{ row.team }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-awards">
+                <h3>No results found</h3>
+                <p class="mb-0">Try searching for another player name or year.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

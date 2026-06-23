@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Player Profiles{% endblock %}
+
+{% block content %}
+
+<style>
+    .players-hero {
+        background: linear-gradient(135deg, #111827, #1d428a);
+        color: white;
+        border-radius: 24px;
+        padding: 42px 32px;
+        margin-bottom: 28px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .players-hero h1 {
+        font-size: 42px;
+        font-weight: 900;
+        margin-bottom: 10px;
+    }
+
+    .players-search-card {
+        background: white;
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .player-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        height: 100%;
+    }
+
+    .player-card-body {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 16px;
+        align-items: center;
+        padding: 18px;
+    }
+
+    .player-search-image {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 14px;
+        background-color: #f3f4f6;
+    }
+
+    .player-card h3 {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 6px 0;
+    }
+
+    .player-card p {
+        margin: 3px 0;
+        color: #4b5563;
+    }
+
+    .player-card-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .empty-results {
+        background: white;
+        border-radius: 18px;
+        padding: 28px;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+</style>
+
+<div class="players-hero">
+    <h1>Player Profiles</h1>
+    <p class="mb-0">
+        Search for an NBA player to view their individual profile, career summary,
+        awards and season-by-season statistics.
+    </p>
+</div>
+
+<div class="players-search-card">
+    <form method="GET" action="{{ url_for('player_search_page') }}">
+        <label for="q" class="form-label fw-bold">Search player name</label>
+
+        <div class="input-group input-group-lg">
+            <input
+                type="text"
+                name="q"
+                id="q"
+                class="form-control"
+                list="player_name_suggestions"
+                value="{{ search }}"
+                placeholder="e.g. Michael Jordan, LeBron James, Stephen Curry">
+
+            <button class="btn btn-dark" type="submit">
+                Search
+            </button>
+        </div>
+
+        <datalist id="player_name_suggestions">
+            {% for player_name in player_name_options %}
+                <option value="{{ player_name }}">
+            {% endfor %}
+        </datalist>
+
+        {% if search %}
+            <p class="mt-3 mb-0 text-muted">
+                Showing {{ result_count }} result(s) for "{{ search }}".
+            </p>
+        {% endif %}
+    </form>
+</div>
+
+{% if search and players %}
+    <div class="row g-4">
+        {% for player in players %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card player-card">
+                    <div class="player-card-body">
+                        <img
+                            src="{{ player.image_url }}"
+                            alt="{{ player.name }} headshot"
+                            class="player-search-image">
+
+                        <div>
+                            <h3>{{ player.name }}</h3>
+
+                            <p>
+                                <strong>Position:</strong>
+                                {{ player.position if player.position else "Unknown" }}
+                            </p>
+
+                            <p>
+                                <strong>Team:</strong>
+                                {{ player.team if player.team else "Unknown" }}
+                            </p>
+
+                            <p>
+                                <strong>Career:</strong>
+                                {{ player.first_season }}-{{ player.last_season }}
+                            </p>
+
+                            <div class="player-card-actions">
+                                <a
+                                    href="{{ url_for('player_profile', player_id=player.player_id) }}"
+                                    class="btn btn-dark btn-sm">
+                                    View Profile
+                                </a>
+
+                                <a
+                                    href="{{ url_for('player_graphs', player_id=player.player_id) }}"
+                                    class="btn btn-outline-dark btn-sm">
+                                    Graph Player
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% elif search %}
+    <div class="empty-results">
+        <h2>No players found</h2>
+        <p class="mb-0">
+            Try checking the spelling or searching only the player's surname.
+        </p>
+    </div>
+{% else %}
+    <div class="empty-results">
+        <h2>Search for a player</h2>
+        <p class="mb-0">
+            Start typing a player's name above, then select from the suggestions or press search.
+        </p>
+    </div>
+{% endif %}
+
+{% endblock %}

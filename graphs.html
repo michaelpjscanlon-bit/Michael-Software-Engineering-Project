@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}NBA Graph Generator{% endblock %}
+
+{% block content %}
+
+<style>
+    .graph-page {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .graph-intro {
+        max-width: 900px;
+        margin: 0 auto 24px auto;
+        text-align: center;
+        line-height: 1.6;
+        font-size: 17px;
+    }
+
+    .graph-card {
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .graph-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(260px, 1fr));
+        gap: 20px 28px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .select-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .graph-form select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        background-color: white;
+    }
+
+    .color-preview {
+        width: 18px;
+        height: 32px;
+        border-radius: 5px;
+        border: 1px solid #333;
+        flex-shrink: 0;
+    }
+
+    .team-logo-preview {
+        height: 32px;
+        width: 32px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .button-row {
+        grid-column: 1 / -1;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .generate-button {
+        padding: 11px 26px;
+        border: none;
+        border-radius: 8px;
+        background-color: #111827;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .generate-button:hover {
+        background-color: #374151;
+    }
+
+    .graph-title {
+        margin-top: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 28px;
+    }
+
+    .custom-legend {
+        margin: 15px 0 25px 0;
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .legend-logo {
+        height: 30px;
+        width: 30px;
+        object-fit: contain;
+    }
+
+    .legend-line {
+        width: 34px;
+        height: 8px;
+        border-radius: 4px;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 500px;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    .data-table th {
+        background-color: #f4f4f4;
+        font-weight: 700;
+    }
+
+    .back-link {
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    @media (max-width: 800px) {
+        .graph-form {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-wrapper {
+            height: 380px;
+        }
+    }
+</style>
+
+<div class="w3-container w3-padding-32 graph-page">
+
+```
+<h1>NBA Graph Generator</h1>
+
+<p class="graph-intro">
+    This graph combines a team’s home and away games, groups them by NBA season, and calculates the selected statistic for each season.
+    If a comparison team is selected, both teams are shown on the same graph.
+    Select a team, comparison team and statistic to generate a graph showing how team performance changes over time.
+</p>
+
+<!-- Chart.js creates the graph -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="graph-card">
+    <form method="GET" action="/graphs" class="graph-form">
+
+        <div class="form-group">
+            <label for="team">Select team</label>
+
+            <div class="select-row">
+                <select name="team" id="team">
+                    {% for team in teams %}
+                        <option
+                            value="{{ team[0] }}"
+                            data-color="{{ team[2] }}"
+                            data-logo="{{ team[3] }}"
+                            {% if team[0] == selected_team %}selected{% endif %}
+                        >
+                            {{ team[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <span
+                    id="teamColorPreview"
+                    class="color-preview"
+                    style="background-color: {{ selected_team_color }};">
+                </span>
+
+                <img
+                    id="teamLogoPreview"
+                    class="team-logo-preview"
+                    src="{{ selected_team_logo }}"
+                    alt="{{ selected_team_name }} logo">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="compare_team">Compare with</label>
+
+            <div class="select-row">
+                <select name="compare_team" id="compare_team">
+                    <option value="" data-color="#666666" data-logo="" {% if not compare_team %}selected{% endif %}>
+                        No comparison
+                    </option>
+
+                    {% for team in teams %}
+                        <option
+                            value="{{ team[0] }}"
+                            data-color="{{ team[2] }}"
+                            data-logo="{{ team[3] }}"
+                            {% if team[0] == compare_team %}selected{% endif %}
+                        >
+                            {{ team[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <span
+                    id="compareTeamColorPreview"
+                    class="color-preview"
+                    style="background-color: {{ compare_team_color }};">
+                </span>
+
+                <img
+                    id="compareTeamLogoPreview"
+                    class="team-logo-preview"
+                    src="{{ compare_team_logo }}"
+                    alt="Comparison team logo"
+                    {% if not compare_team %}style="display:none;"{% endif %}>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="stat">Select statistic</label>
+
+            <select name="stat" id="stat">
+                {% for stat_key, stat_info in stat_options.items() %}
+                    <option value="{{ stat_key }}" {% if stat_key == selected_stat %}selected{% endif %}>
+                        {{ stat_info["label"] }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="chart_type">Chart type</label>
+
+            <select name="chart_type" id="chart_type">
+                <option value="line" {% if chart_type == "line" %}selected{% endif %}>
+                    Line graph
+                </option>
+                <option value="bar" {% if chart_type == "bar" %}selected{% endif %}>
+                    Bar graph
+                </option>
+            </select>
+        </div>
+
+        <div class="button-row">
+            <button type="submit" class="generate-button">Generate Graph</button>
+        </div>
+
+    </form>
+</div>
+
+{% if compare_team %}
+    <div class="graph-card">
+
+        <h2 class="graph-title">
+            Head-to-head matchup: {{ selected_team_name }} vs {{ compare_team_name }} — {{ stat_label }}
+        </h2>
+
+        <p class="graph-intro">
+            This graph only includes games where {{ selected_team_name }} played directly against {{ compare_team_name }}.
+        </p>
+
+        <div class="custom-legend">
+            <div class="legend-item">
+                <img
+                    src="{{ selected_team_logo }}"
+                    alt="{{ selected_team_name }} logo"
+                    class="legend-logo">
+
+                <span
+                    class="legend-line"
+                    style="background-color: {{ selected_team_color }};">
+                </span>
+
+                <strong>{{ selected_team_name }}</strong>
+            </div>
+
+            <div class="legend-item">
+                <img
+                    src="{{ compare_team_logo }}"
+                    alt="{{ compare_team_name }} logo"
+                    class="legend-logo">
+
+                <span
+                    class="legend-line"
+                    style="background-color: {{ compare_team_color }};">
+                </span>
+
+                <strong>{{ compare_team_name }}</strong>
+            </div>
+        </div>
+
+        {% if matchup_labels and matchup_chart_datasets %}
+            <div class="chart-wrapper">
+                <canvas id="matchupChart"></canvas>
+            </div>
+        {% else %}
+            <p>
+                No head-to-head matchup data was found for these teams and this statistic.
+            </p>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+<div class="graph-card">
+
+    {% if compare_team %}
+        <h2 class="graph-title">{{ selected_team_name }} vs {{ compare_team_name }} — {{ stat_label }}</h2>
+    {% else %}
+        <h2 class="graph-title">{{ selected_team_name }} — {{ stat_label }}</h2>
+    {% endif %}
+
+    <div class="custom-legend">
+        <div class="legend-item">
+            <img
+                src="{{ selected_team_logo }}"
+                alt="{{ selected_team_name }} logo"
+                class="legend-logo">
+
+            <span
+                class="legend-line"
+                style="background-color: {{ selected_team_color }};">
+            </span>
+
+            <strong>{{ selected_team_name }}</strong>
+        </div>
+
+        {% if compare_team %}
+            <div class="legend-item">
+                <img
+                    src="{{ compare_team_logo }}"
+                    alt="{{ compare_team_name }} logo"
+                    class="legend-logo">
+
+                <span
+                    class="legend-line"
+                    style="background-color: {{ compare_team_color }};">
+                </span>
+
+                <strong>{{ compare_team_name }}</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if labels and chart_datasets %}
+        <div class="chart-wrapper">
+            <canvas id="teamChart"></canvas>
+        </div>
+    {% else %}
+        <p>
+            No data was found for this team and statistic. This may be because the selected team did not exist during the available dataset period,
+            or because this statistic was not recorded for that season.
+        </p>
+    {% endif %}
+
+</div>
+
+<script>
+    function updateTeamDisplay(selectId, colorPreviewId, logoPreviewId) {
+        const select = document.getElementById(selectId);
+        const colorPreview = document.getElementById(colorPreviewId);
+        const logoPreview = document.getElementById(logoPreviewId);
+
+        if (!select || !colorPreview || !logoPreview) {
+            return;
+        }
+
+        const selectedOption = select.options[select.selectedIndex];
+        const color = selectedOption.dataset.color || "#666666";
+        const logo = selectedOption.dataset.logo || "";
+
+        colorPreview.style.backgroundColor = color;
+        select.style.borderLeft = `12px solid ${color}`;
+
+        if (logo) {
+            logoPreview.src = logo;
+            logoPreview.style.display = "inline-block";
+        } else {
+            logoPreview.style.display = "none";
+        }
+    }
+
+    updateTeamDisplay("team", "teamColorPreview", "teamLogoPreview");
+    updateTeamDisplay("compare_team", "compareTeamColorPreview", "compareTeamLogoPreview");
+
+    document.getElementById("team").addEventListener("change", function () {
+        updateTeamDisplay("team", "teamColorPreview", "teamLogoPreview");
+    });
+
+    document.getElementById("compare_team").addEventListener("change", function () {
+        updateTeamDisplay("compare_team", "compareTeamColorPreview", "compareTeamLogoPreview");
+    });
+</script>
+
+<script>
+    const graphLabels = {{ labels | tojson }};
+    const chartDatasets = {{ chart_datasets | tojson }};
+
+    const ctx = document.getElementById('teamChart');
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: '{{ chart_type }}',
+            data: {
+                labels: graphLabels,
+                datasets: chartDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        right: 24,
+                        bottom: 10,
+                        left: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'NBA Season'
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: '{{ stat_label }}'
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<script>
+    const matchupLabels = {{ matchup_labels | tojson }};
+    const matchupDatasets = {{ matchup_chart_datasets | tojson }};
+
+    const matchupCtx = document.getElementById('matchupChart');
+
+    if (matchupCtx) {
+        new Chart(matchupCtx, {
+            type: '{{ chart_type }}',
+            data: {
+                labels: matchupLabels,
+                datasets: matchupDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        right: 24,
+                        bottom: 10,
+                        left: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'NBA Season'
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: '{{ stat_label }} in head-to-head games'
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<div class="graph-card">
+    <h2>Graph Data</h2>
+
+    <table class="data-table">
+        <tr>
+            <th>Season</th>
+            <th>{{ selected_team_name }}</th>
+
+            {% if compare_team %}
+                <th>{{ compare_team_name }}</th>
+            {% endif %}
+        </tr>
+
+        {% for row in table_rows %}
+            <tr>
+                <td>{{ row.season }}</td>
+                <td>{{ row.team_value }}</td>
+
+                {% if compare_team %}
+                    <td>{{ row.compare_value }}</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<p class="back-link">
+    <a href="/">Back to home</a>
+</p>
+```
+
+</div>
+
+{% endblock %}
