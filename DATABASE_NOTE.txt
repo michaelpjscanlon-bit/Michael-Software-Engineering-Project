@@ -1,0 +1,3 @@
+The full SQLite NBA database used for this project is stored locally and was not uploaded to GitHub because the file size was approximately 2.24GB, which exceeds GitHub's normal upload limit.
+
+The GitHub repository contains the source code, templates, styling and project structure. The database was used locally during development and testing as stated in the README file.
